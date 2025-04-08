@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/utils/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter_app/utils/app_theme.dart';
@@ -69,9 +70,9 @@ class _SplashScreenState extends State<SplashScreen>
         );
       }
     } else {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const PassengerHomeScreen()),
+      );
     }
   }
 
@@ -142,10 +143,13 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 50),
-                Lottie.asset(
-                  'assets/animations/car_loading.json',
+                // Replace the Lottie animation with a CircularProgressIndicator as fallback
+                SizedBox(
                   width: 100,
                   height: 100,
+                  child: Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
                 ),
               ],
             ),

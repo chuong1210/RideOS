@@ -50,16 +50,45 @@ class _DriverBookingHistoryScreenState extends State<DriverBookingHistoryScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lịch sử chuyến đi'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Tất cả'),
-            Tab(text: 'Hoàn thành'),
-            Tab(text: 'Đã hủy'),
-          ],
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(48),
+          child: Container(
+            color: Colors.blue,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: false,
+              labelPadding: EdgeInsets.symmetric(horizontal: 10),
+              indicatorColor: Colors.white,
+              indicatorWeight: 3,
+              tabs: [
+                Tab(
+                  child: Text(
+                    'Tất cả',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                Tab(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Hoàn thành',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                    ),
+                  ),
+                ),
+                Tab(
+                  child: Text(
+                    'Đã hủy',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       body: LoadingOverlay(
@@ -89,11 +118,7 @@ class _DriverBookingHistoryScreenState extends State<DriverBookingHistoryScreen>
         final filteredBookings =
             filterStatus != null
                 ? bookings
-                    .where(
-                      (booking) =>
-                          booking != null &&
-                          booking.bookingStatus == filterStatus,
-                    )
+                    .where((booking) => booking.bookingStatus == filterStatus)
                     .toList()
                 : bookings;
 
@@ -102,18 +127,42 @@ class _DriverBookingHistoryScreenState extends State<DriverBookingHistoryScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.history,
-                  size: 80,
-                  color: AppColors.primary.withOpacity(0.5),
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    filterStatus == BookingStatus.cancelled
+                        ? Icons.cancel
+                        : Icons.history,
+                    size: 40,
+                    color: Colors.blue,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Không có chuyến đi nào',
+                  filterStatus == BookingStatus.cancelled
+                      ? 'Chưa có chuyến đi nào bị hủy'
+                      : filterStatus == BookingStatus.completed
+                      ? 'Chưa có chuyến đi nào hoàn thành'
+                      : 'Không có chuyến đi nào',
                   style: TextStyle(
                     fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Các chuyến đi của bạn sẽ hiển thị ở đây',
+                  style: TextStyle(
+                    fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),

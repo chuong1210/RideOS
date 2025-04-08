@@ -47,33 +47,88 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lịch sử chuyến đi'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Tất cả'),
-            Tab(text: 'Hoàn thành'),
-            Tab(text: 'Đã hủy'),
-          ],
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-        ),
-      ),
-      body: LoadingOverlay(
-        isLoading: _isLoading,
-        child: RefreshIndicator(
-          onRefresh: _loadBookingHistory,
-          color: AppColors.primary,
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildBookingList(null),
-              _buildBookingList(BookingStatus.completed),
-              _buildBookingList(BookingStatus.cancelled),
-            ],
+      appBar: AppBar(title: const Text('Lịch sử chuyến đi'), elevation: 0),
+      body: Column(
+        children: [
+          _buildTabBar(),
+          Expanded(
+            child: LoadingOverlay(
+              isLoading: _isLoading,
+              child: RefreshIndicator(
+                onRefresh: _loadBookingHistory,
+                color: AppColors.primary,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildBookingList(null),
+                    _buildBookingList(BookingStatus.completed),
+                    _buildBookingList(BookingStatus.cancelled),
+                  ],
+                ),
+              ),
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TabBar(
+        controller: _tabController,
+
+        // isScrollable: true, // <--- ADD THIS LINE
+        tabs: [
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.history, size: 16),
+                SizedBox(width: 6),
+                Text('Tất cả'),
+              ],
+            ),
+          ),
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle, size: 9),
+                SizedBox(width: 6),
+                Text('Hoàn thành'),
+              ],
+            ),
+          ),
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.cancel, size: 13),
+                SizedBox(width: 6),
+                Text('Đã hủy'),
+              ],
+            ),
+          ),
+        ],
+        labelColor: AppColors.primary,
+        unselectedLabelColor: AppColors.textSecondary,
+        indicatorColor: AppColors.primary,
+        indicatorWeight: 3,
+        labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        unselectedLabelStyle: TextStyle(
+          fontWeight: FontWeight.normal,
+          fontSize: 14,
         ),
       ),
     );
@@ -93,26 +148,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
                 : bookings;
 
         if (filteredBookings.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.history,
-                  size: 80,
-                  color: AppColors.primary.withOpacity(0.5),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Không có chuyến đi nào',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          );
+          return _buildEmptyState(filterStatus);
         }
 
         return ListView.builder(
@@ -124,6 +160,63 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
           },
         );
       },
+    );
+  }
+
+  Widget _buildEmptyState(BookingStatus? status) {
+    String message;
+    IconData icon;
+
+    if (status == BookingStatus.completed) {
+      message = 'Chưa có chuyến đi nào hoàn thành';
+      icon = Icons.check_circle_outline;
+    } else if (status == BookingStatus.cancelled) {
+      message = 'Chưa có chuyến đi nào bị hủy';
+      icon = Icons.cancel_outlined;
+    } else {
+      message = 'Chưa có lịch sử chuyến đi';
+      icon = Icons.history;
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: AppColors.background.withOpacity(0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 60, color: AppColors.primary),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            message,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (status == null)
+            ElevatedButton.icon(
+              onPressed: () {
+                // Navigator.of(context).pop();
+              },
+              icon: Icon(Icons.directions_car),
+              label: Text('Đặt xe ngay'),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -154,109 +247,196 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
         ),
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _getStatusColor(booking.bookingStatus).withOpacity(0.1),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _getStatusIcon(booking.bookingStatus),
-                    color: _getStatusColor(booking.bookingStatus),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _getStatusText(booking.bookingStatus),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _getStatusColor(booking.bookingStatus),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    formattedDate,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Column(
-                        children: [
-                          Icon(
-                            Icons.circle,
-                            size: 12,
-                            color: AppColors.primary,
-                          ),
-                          Container(
-                            width: 2,
-                            height: 30,
-                            color: AppColors.primary,
-                          ),
-                          Icon(
-                            Icons.location_on,
-                            size: 12,
-                            color: AppColors.error,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              booking.pickup.address,
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              booking.destination.address,
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${booking.distance.toStringAsFixed(1)} km',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                      Text(
-                        '${booking.price.toStringAsFixed(0)}đ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            _buildBookingHeader(booking, formattedDate),
+            _buildBookingBody(booking),
+            _buildBookingFooter(booking),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBookingHeader(BookingModel booking, String formattedDate) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: _getStatusColor(booking.bookingStatus).withOpacity(0.1),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _getStatusColor(booking.bookingStatus).withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _getStatusIcon(booking.bookingStatus),
+              color: _getStatusColor(booking.bookingStatus),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _getStatusText(booking.bookingStatus),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: _getStatusColor(booking.bookingStatus),
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                formattedDate,
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          Spacer(),
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: AppColors.textSecondary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingBody(BookingModel booking) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+              Container(
+                width: 2,
+                height: 40,
+                color: AppColors.primary.withOpacity(0.5),
+              ),
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Điểm đón',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      booking.pickup.address,
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Điểm đến',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      booking.destination.address,
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingFooter(BookingModel booking) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+      ),
+      child: Row(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.route, size: 16, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                '${booking.distance.toStringAsFixed(1)} km',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Row(
+            children: [
+              Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                '${(booking.distance * 3).toInt()} phút',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            '${booking.price.toStringAsFixed(0)}đ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -285,9 +465,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
       case BookingStatus.accepted:
         return Icons.directions_car;
       case BookingStatus.arrived:
-        return Icons.directions_car;
+        return Icons.location_on;
       case BookingStatus.inProgress:
-        return Icons.directions_car;
+        return Icons.navigation;
       case BookingStatus.completed:
         return Icons.check_circle;
       case BookingStatus.cancelled:
